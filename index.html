@@ -11,5 +11,20 @@
   <body class="bg-[#FAF7F2] text-[#1E2430] antialiased selection:bg-[#7C83FD]/20 selection:text-[#1E2430] overflow-hidden">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (function () {
+        var hasBuiltBundle = document.querySelector('script[src*="assets/app.js"]');
+        if (!hasBuiltBundle && location.hostname.indexOf('github.io') !== -1) {
+          var css = document.createElement('link');
+          css.rel = 'stylesheet';
+          css.href = './dist/assets/index.css';
+          document.head.appendChild(css);
+          var js = document.createElement('script');
+          js.type = 'module';
+          js.src = './dist/assets/app.js';
+          document.body.appendChild(js);
+        }
+      })();
+    </script>
   </body>
 </html>

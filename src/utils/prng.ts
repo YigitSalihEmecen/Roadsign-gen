@@ -92,10 +92,10 @@ const US_CITIES = [
 ];
 
 const GERMAN_CITIES = [
-  ['Berlin    Dresden', 'Erfurt', 'Gotha-Boxberg'],
-  ['München   Stuttgart', 'Augsburg', 'Ulm-West'],
-  ['Hamburg   Bremen', 'Hannover', 'Lübeck'],
-  ['Frankfurt Köln', 'Wiesbaden', 'Mainz-Süd'],
+  ['Berlin  Dresden | Waltershausen', 'Erfurt | Friedrichroda', 'Gotha-Boxberg | Bad Tabarz'],
+  ['München  Stuttgart | Augsburg-Ost', 'Augsburg | Friedberg', 'Ulm-West | Dasing'],
+  ['Hamburg  Bremen | Bad Fallingbostel', 'Hannover | Walsrode', 'Lübeck | Soltau-Süd'],
+  ['Frankfurt  Köln', 'Wiesbaden', 'Mainz-Süd'],
 ];
 
 const JAPAN_DESTINATIONS = [

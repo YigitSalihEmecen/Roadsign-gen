@@ -649,37 +649,42 @@ function drawArrowGraphic(
   }
 
   if (type === 'autobahn-fork') {
-    const h = panelH * 0.72;
-    const stemW = Math.max(8, size * 0.13);
-    const lx = -panelW * 0.42;
+    const h = Math.min(panelH * 0.68, size * 1.85);
+    const stemW = Math.max(6, size * 0.12);
+    const leftStemX = -size * 0.34;
+    const rightStemX = size * 0.02;
+
     ctx.translate(cx, cy);
-    ctx.fillRect(lx - stemW / 2, -h * 0.34, stemW, h * 0.78);
+
+    // Left straight-through lane arrow
+    ctx.fillRect(leftStemX - stemW / 2, -h * 0.3, stemW, h * 0.74);
     ctx.beginPath();
-    ctx.moveTo(lx, -h * 0.48);
-    ctx.lineTo(lx - stemW * 1.9, -h * 0.28);
-    ctx.lineTo(lx + stemW * 1.9, -h * 0.28);
+    ctx.moveTo(leftStemX, -h * 0.46);
+    ctx.lineTo(leftStemX - stemW * 1.75, -h * 0.25);
+    ctx.lineTo(leftStemX + stemW * 1.75, -h * 0.25);
     ctx.closePath();
     ctx.fill();
 
-    const rx = panelW * 0.05;
-    ctx.fillRect(rx - stemW / 2, -h * 0.34, stemW, h * 0.78);
+    // Right through-lane + exit fork arrow
+    ctx.fillRect(rightStemX - stemW / 2, -h * 0.3, stemW, h * 0.74);
     ctx.beginPath();
-    ctx.moveTo(rx, -h * 0.48);
-    ctx.lineTo(rx - stemW * 1.9, -h * 0.28);
-    ctx.lineTo(rx + stemW * 1.9, -h * 0.28);
+    ctx.moveTo(rightStemX, -h * 0.46);
+    ctx.lineTo(rightStemX - stemW * 1.75, -h * 0.25);
+    ctx.lineTo(rightStemX + stemW * 1.75, -h * 0.25);
     ctx.closePath();
     ctx.fill();
 
+    // Curved exit branch to the right (stays strictly within +size * 0.52)
     ctx.lineWidth = stemW;
     ctx.beginPath();
-    ctx.moveTo(rx, h * 0.35);
-    ctx.quadraticCurveTo(rx + size * 0.1, h * 0.15, rx + size * 0.38, h * 0.05);
+    ctx.moveTo(rightStemX, h * 0.34);
+    ctx.quadraticCurveTo(rightStemX + size * 0.08, h * 0.12, rightStemX + size * 0.34, h * 0.02);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(rx + size * 0.5, h * 0.0);
-    ctx.lineTo(rx + size * 0.28, -h * 0.03);
-    ctx.lineTo(rx + size * 0.36, h * 0.16);
+    ctx.moveTo(rightStemX + size * 0.46, -h * 0.04);
+    ctx.lineTo(rightStemX + size * 0.24, -h * 0.06);
+    ctx.lineTo(rightStemX + size * 0.33, h * 0.14);
     ctx.closePath();
     ctx.fill();
 
@@ -1292,18 +1297,6 @@ export function renderSignPanelTexture(panel: SignPanelConfig, lod: LODLevel): T
       );
     }
 
-    if (panel.dividerLine !== 'none') {
-      ctx.fillStyle = panel.borderColor;
-      const lineThick = Math.max(4, minDim * 0.018);
-      if (panel.dividerLine === 'horizontal-middle') {
-        ctx.fillRect(canvasW * 0.04, canvasH * 0.5 - lineThick / 2, canvasW * 0.92, lineThick);
-      } else if (panel.dividerLine === 'header-split') {
-        ctx.fillRect(canvasW * 0.04, canvasH * 0.28, canvasW * 0.92, lineThick);
-      } else if (panel.dividerLine === 'vertical-split') {
-        ctx.fillRect(canvasW * 0.52, canvasH * 0.08, lineThick * 0.7, canvasH * 0.84);
-      }
-    }
-
     const safeMargin = insetPx + borderPx + minDim * 0.045;
     let contentTop = safeMargin;
     let contentBottom = canvasH - safeMargin;
@@ -1328,9 +1321,17 @@ export function renderSignPanelTexture(panel: SignPanelConfig, lod: LODLevel): T
       contentRight = canvasW * 0.76;
     }
 
+    const hasTextOrBadges = panel.lines.length > 0 || panel.badges.length > 0 || Boolean(panel.headerText);
+
+    // 1. Reserve strictly non-overlapping zones for arrows
     if (panel.arrowType !== 'none' && panel.arrowPosition !== 'background-box') {
-      const arrowSize = minDim * 0.27 * panel.arrowScale;
-      if (panel.arrowPosition === 'center') {
+      const arrowSize = minDim * 0.26 * Math.min(1.35, panel.arrowScale);
+
+      // If 'center' is chosen on a sign that also has text/badges, place arrow in the bottom zone so it never overlaps text!
+      const effectivePos =
+        panel.arrowPosition === 'center' && hasTextOrBadges ? 'bottom' : panel.arrowPosition;
+
+      if (effectivePos === 'center') {
         drawArrowGraphic(
           ctx,
           panel.arrowType,
@@ -1341,89 +1342,92 @@ export function renderSignPanelTexture(panel: SignPanelConfig, lod: LODLevel): T
           canvasW,
           canvasH
         );
-      } else if (panel.arrowPosition === 'bottom') {
+      } else if (effectivePos === 'bottom') {
+        const ay = contentBottom - arrowSize * 0.52;
         drawArrowGraphic(
           ctx,
           panel.arrowType,
-          canvasW / 2,
-          canvasH - safeMargin - arrowSize * 0.5,
+          (contentLeft + contentRight) / 2,
+          ay,
           arrowSize,
           panel.textColor,
           canvasW,
           canvasH
         );
-        contentBottom = canvasH - safeMargin - arrowSize * 1.15;
-      } else if (panel.arrowPosition === 'top') {
+        contentBottom = ay - arrowSize * 0.65;
+      } else if (effectivePos === 'top') {
+        const ay = contentTop + arrowSize * 0.52;
         drawArrowGraphic(
           ctx,
           panel.arrowType,
-          canvasW / 2,
-          safeMargin + arrowSize * 0.5,
+          (contentLeft + contentRight) / 2,
+          ay,
           arrowSize,
           panel.textColor,
           canvasW,
           canvasH
         );
-        contentTop = safeMargin + arrowSize * 1.15;
-      } else if (panel.arrowPosition === 'left') {
-        if (panel.arrowType === 'autobahn-fork') {
-          drawArrowGraphic(
-            ctx,
-            panel.arrowType,
-            canvasW / 2,
-            canvasH / 2,
-            arrowSize,
-            panel.textColor,
-            canvasW,
-            canvasH
-          );
-          contentLeft = canvasW * 0.14;
-        } else {
-          const ax = safeMargin + arrowSize * 0.6;
-          drawArrowGraphic(
-            ctx,
-            panel.arrowType,
-            ax,
-            canvasH * 0.54,
-            arrowSize * 1.1,
-            panel.textColor,
-            canvasW,
-            canvasH
-          );
-          contentLeft = ax + arrowSize * 0.68;
-        }
-      } else if (panel.arrowPosition === 'right') {
-        const ax = canvasW - safeMargin - arrowSize * 0.6;
+        contentTop = ay + arrowSize * 0.65;
+      } else if (effectivePos === 'left') {
+        const isFork = panel.arrowType === 'autobahn-fork';
+        const colW = isFork
+          ? Math.max(arrowSize * 1.45, (contentRight - contentLeft) * 0.2)
+          : arrowSize * 1.32;
+        const ax = contentLeft + colW * 0.48;
         drawArrowGraphic(
           ctx,
           panel.arrowType,
           ax,
-          canvasH * 0.56,
-          arrowSize * 1.1,
+          (contentTop + contentBottom) / 2,
+          isFork ? arrowSize * 1.05 : arrowSize,
           panel.textColor,
-          canvasW,
-          canvasH
+          colW,
+          contentBottom - contentTop
         );
-        contentRight = ax - arrowSize * 0.68;
+        contentLeft += colW + minDim * 0.03;
+      } else if (effectivePos === 'right') {
+        const isFork = panel.arrowType === 'autobahn-fork';
+        const colW = isFork
+          ? Math.max(arrowSize * 1.45, (contentRight - contentLeft) * 0.2)
+          : arrowSize * 1.32;
+        const ax = contentRight - colW * 0.48;
+        drawArrowGraphic(
+          ctx,
+          panel.arrowType,
+          ax,
+          (contentTop + contentBottom) / 2,
+          isFork ? arrowSize * 1.05 : arrowSize,
+          panel.textColor,
+          colW,
+          contentBottom - contentTop
+        );
+        contentRight -= colW + minDim * 0.03;
       }
     }
 
+    // 2. Reserve strictly non-overlapping zones for pictograms
     if (panel.pictogramType !== 'none') {
-      const pictoSize = minDim * 0.46 * panel.pictogramScale;
-      let px = canvasW / 2;
-      let py = canvasH / 2;
-      if (panel.shape === 'triangle-up') py = canvasH * 0.6;
-      else if (panel.shape === 'triangle-down') py = canvasH * 0.4;
-      else if (panel.pictogramPosition === 'top') {
-        py = contentTop + pictoSize * 0.55;
-        contentTop += pictoSize * 1.15;
-      } else if (panel.pictogramPosition === 'left') {
-        px = contentLeft + pictoSize * 0.55;
-        contentLeft += pictoSize * 1.15;
-      } else if (panel.pictogramPosition === 'right') {
-        px = contentRight - pictoSize * 0.55;
-        contentRight -= pictoSize * 1.15;
+      const pictoSize =
+        (hasTextOrBadges ? minDim * 0.3 : minDim * 0.46) * Math.min(1.3, panel.pictogramScale);
+      const effectivePictoPos =
+        panel.pictogramPosition === 'center' && hasTextOrBadges ? 'top' : panel.pictogramPosition;
+
+      let px = (contentLeft + contentRight) / 2;
+      let py = (contentTop + contentBottom) / 2;
+
+      if (panel.shape === 'triangle-up' && !hasTextOrBadges) py = canvasH * 0.6;
+      else if (panel.shape === 'triangle-down' && !hasTextOrBadges) py = canvasH * 0.4;
+      else if (effectivePictoPos === 'top') {
+        py = contentTop + pictoSize * 0.52;
+        contentTop = py + pictoSize * 0.62;
+      } else if (effectivePictoPos === 'left') {
+        px = contentLeft + pictoSize * 0.52;
+        contentLeft = px + pictoSize * 0.62;
+      } else if (effectivePictoPos === 'right') {
+        px = contentRight - pictoSize * 0.52;
+        contentRight = px - pictoSize * 0.62;
       }
+
       drawPictogramGraphic(
         ctx,
         panel.pictogramType,
@@ -1435,9 +1439,30 @@ export function renderSignPanelTexture(panel: SignPanelConfig, lod: LODLevel): T
       );
     }
 
+    const lineThick = Math.max(4, minDim * 0.016);
+    const hasTwoColumnLines =
+      panel.dividerLine === 'vertical-split' &&
+      panel.lines.some((l) => l.text.includes('|') || /\s{4,}/.test(l.text.trim()));
+
+    // If vertical-split is enabled with single-column text, place the vertical divider cleanly between the arrow column and the text zone!
+    if (panel.dividerLine === 'vertical-split' && !hasTwoColumnLines) {
+      ctx.fillStyle = panel.borderColor;
+      const divX =
+        contentLeft > safeMargin + minDim * 0.05
+          ? contentLeft - minDim * 0.015
+          : contentRight < canvasW - safeMargin - minDim * 0.05
+          ? contentRight + minDim * 0.015
+          : contentLeft + (contentRight - contentLeft) * 0.22;
+      ctx.fillRect(divX - lineThick * 0.35, safeMargin, lineThick * 0.7, canvasH - safeMargin * 2);
+      if (divX > contentLeft && divX < (contentLeft + contentRight) / 2) {
+        contentLeft = divX + minDim * 0.03;
+      }
+    }
+
+    // 3. Header Text
     if (panel.headerText) {
       ctx.fillStyle = panel.textColor;
-      ctx.font = `700 ${Math.round(minDim * 0.11)}px ${fontStack}`;
+      ctx.font = `700 ${Math.round(minDim * 0.105)}px ${fontStack}`;
       ctx.textBaseline = 'middle';
       drawTextWithTracking(
         ctx,
@@ -1448,32 +1473,50 @@ export function renderSignPanelTexture(panel: SignPanelConfig, lod: LODLevel): T
         'center',
         (contentRight - contentLeft) * 0.92
       );
-      contentTop += minDim * 0.13;
+      contentTop += minDim * 0.125;
     }
 
-    // Smart Non-Overlapping Route Badges Layout
+    // 4. Smart Non-Overlapping Route Badges Layout (strictly inside [contentLeft, contentRight])
     if (panel.badges && panel.badges.length > 0) {
       const isAutobahnBottom = panel.badges.some((b) => b.type === 'autobahn-hex');
+      const zoneW = Math.max(60, contentRight - contentLeft);
+
       if (isAutobahnBottom) {
-        const badgeSize = minDim * 0.18;
-        const badgeY = canvasH - safeMargin - badgeSize * 0.42;
+        const badgeSize = Math.min(minDim * 0.17, zoneW * 0.22);
+        const badgeY = contentBottom - badgeSize * 0.45;
+        const itemCount = panel.badges.length;
+        const colStep = zoneW / Math.max(1, itemCount);
+
         panel.badges.forEach((b, idx) => {
-          const bx = idx === 0 ? canvasW * 0.24 : canvasW * 0.44;
-          drawInlineBadge(ctx, b, bx, badgeY, badgeSize, fontStack);
+          const slotLeft = contentLeft + idx * colStep;
+          const slotCenter = slotLeft + colStep * 0.5;
+          const bw = getInlineBadgeBaseWidth(b, badgeSize);
           if (b.direction) {
             ctx.fillStyle = panel.textColor;
-            ctx.font = `700 ${Math.round(minDim * 0.095)}px ${fontStack}`;
+            ctx.font = `700 ${Math.round(badgeSize * 0.48)}px ${fontStack}`;
             ctx.textBaseline = 'middle';
-            drawTextWithTracking(ctx, b.direction, canvasW * 0.72, badgeY, 2, 'center', canvasW * 0.35);
+            const dirW = measureTrackedTextWidth(ctx, b.direction, 2);
+            const totalItemW = bw + badgeSize * 0.22 + dirW;
+            const startX = slotCenter - totalItemW / 2;
+            drawInlineBadge(ctx, b, startX + bw / 2, badgeY, badgeSize, fontStack);
+            drawTextWithTracking(
+              ctx,
+              b.direction,
+              startX + bw + badgeSize * 0.22,
+              badgeY,
+              2,
+              'left',
+              colStep * 0.55
+            );
+          } else {
+            drawInlineBadge(ctx, b, slotCenter, badgeY, badgeSize, fontStack);
           }
         });
         contentBottom = badgeY - badgeSize * 0.65;
       } else {
-        const zoneW = Math.max(60, contentRight - contentLeft);
-        let badgeSize = Math.min(minDim * 0.26, zoneW * 0.32);
+        let badgeSize = Math.min(minDim * 0.25, zoneW * 0.3);
         const gap = badgeSize * 0.24;
 
-        // Measure total row width and auto-scale badgeSize if needed so badges never collide
         const measureRow = (sz: number) => {
           ctx.font = `700 ${Math.round(sz * 0.36)}px ${fontStack}`;
           let sum = 0;
@@ -1522,7 +1565,15 @@ export function renderSignPanelTexture(panel: SignPanelConfig, lod: LODLevel): T
       }
     }
 
-    // Render Multi-Line Text with automatic width fitting so text NEVER stretches or overflows!
+    // Draw header-split divider below header/badges and above text lines
+    if (panel.dividerLine === 'header-split') {
+      ctx.fillStyle = panel.borderColor;
+      const splitY = contentTop + lineThick;
+      ctx.fillRect(contentLeft, splitY, contentRight - contentLeft, lineThick);
+      contentTop = splitY + lineThick * 2.2;
+    }
+
+    // 5. Render Multi-Line Text strictly within [contentLeft..contentRight, contentTop..contentBottom]
     if (panel.lines.length > 0) {
       const zoneCenterX = (contentLeft + contentRight) / 2;
       const zoneWidth = Math.max(40, contentRight - contentLeft);
@@ -1530,29 +1581,80 @@ export function renderSignPanelTexture(panel: SignPanelConfig, lod: LODLevel): T
       const lineCount = panel.lines.length;
       const lineStep = availableH / lineCount;
 
-      panel.lines.forEach((line, idx) => {
-        ctx.fillStyle = line.color || panel.textColor;
-        const maxLineFontH = lineStep * 0.82;
-        const requestedPx = (line.fontSize / 100) * minDim * 0.22;
-        const pxSize = Math.round(Math.min(requestedPx, maxLineFontH));
-        ctx.font = `700 ${pxSize}px ${fontStack}`;
-        ctx.textBaseline = 'middle';
+      if (panel.dividerLine === 'horizontal-middle' && lineCount >= 2) {
+        const midIdx = Math.ceil(lineCount / 2);
+        const divY = contentTop + lineStep * midIdx;
+        ctx.fillStyle = panel.borderColor;
+        ctx.fillRect(contentLeft, divY - lineThick / 2, zoneWidth, lineThick);
+      }
 
-        const ly = contentTop + lineStep * (idx + 0.5);
-        let lx = zoneCenterX;
-        if (line.align === 'left') lx = contentLeft + zoneWidth * 0.03;
-        else if (line.align === 'right') lx = contentRight - zoneWidth * 0.03;
+      if (hasTwoColumnLines) {
+        const splitX = zoneCenterX;
+        ctx.fillStyle = panel.borderColor;
+        ctx.fillRect(splitX - lineThick * 0.35, safeMargin, lineThick * 0.7, canvasH - safeMargin * 2);
 
-        drawTextWithTracking(
-          ctx,
-          line.text,
-          lx,
-          ly,
-          line.letterSpacing,
-          line.align,
-          zoneWidth * 0.94
-        );
-      });
+        const colPad = minDim * 0.03;
+        const leftColW = splitX - colPad - contentLeft;
+        const rightColW = contentRight - (splitX + colPad);
+        const leftColCx = contentLeft + leftColW / 2;
+        const rightColCx = splitX + colPad + rightColW / 2;
+
+        panel.lines.forEach((line, idx) => {
+          ctx.fillStyle = line.color || panel.textColor;
+          const maxLineFontH = lineStep * 0.76;
+          const requestedPx = (line.fontSize / 100) * minDim * 0.22;
+          const pxSize = Math.round(Math.min(requestedPx, maxLineFontH));
+          ctx.font = `700 ${pxSize}px ${fontStack}`;
+          ctx.textBaseline = 'middle';
+          const ly = contentTop + lineStep * (idx + 0.5);
+
+          const raw = line.text;
+          let leftPart = '';
+          let rightPart = '';
+          if (raw.includes('|')) {
+            const parts = raw.split('|');
+            leftPart = parts[0].trim();
+            rightPart = parts.slice(1).join(' ').trim();
+          } else if (/^\s{4,}/.test(raw)) {
+            rightPart = raw.trim();
+          } else {
+            const parts = raw.trim().split(/\s{4,}/);
+            leftPart = parts[0] || '';
+            rightPart = parts.slice(1).join('   ') || '';
+          }
+
+          if (leftPart) {
+            drawTextWithTracking(ctx, leftPart, leftColCx, ly, line.letterSpacing, 'center', leftColW * 0.92);
+          }
+          if (rightPart) {
+            drawTextWithTracking(ctx, rightPart, rightColCx, ly, line.letterSpacing, 'center', rightColW * 0.92);
+          }
+        });
+      } else {
+        panel.lines.forEach((line, idx) => {
+          ctx.fillStyle = line.color || panel.textColor;
+          const maxLineFontH = lineStep * 0.78;
+          const requestedPx = (line.fontSize / 100) * minDim * 0.22;
+          const pxSize = Math.round(Math.min(requestedPx, maxLineFontH));
+          ctx.font = `700 ${pxSize}px ${fontStack}`;
+          ctx.textBaseline = 'middle';
+
+          const ly = contentTop + lineStep * (idx + 0.5);
+          let lx = zoneCenterX;
+          if (line.align === 'left') lx = contentLeft + zoneWidth * 0.03;
+          else if (line.align === 'right') lx = contentRight - zoneWidth * 0.03;
+
+          drawTextWithTracking(
+            ctx,
+            line.text.trim(),
+            lx,
+            ly,
+            line.letterSpacing,
+            line.align,
+            zoneWidth * 0.92
+          );
+        });
+      }
     }
 
     drawWeatheringOverlay(ctx, panel.wearAmount, canvasW, canvasH);

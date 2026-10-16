@@ -1,8 +1,15 @@
 {
   "name": "roadsign-studio-3d",
-  "private": true,
-  "version": "1.0.0",
+  "private": false,
+  "version": "1.1.0",
+  "description": "Procedural 3D Road Sign & Gantry Studio + Game Engine SDK (Three.js / WebGL)",
   "type": "module",
+  "main": "./src/api/index.ts",
+  "module": "./src/api/index.ts",
+  "exports": {
+    ".": "./src/api/index.ts",
+    "./api": "./src/api/index.ts"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
