@@ -87,6 +87,20 @@ const { model, config, triangles } = window.RoadSignAPI.createSignFromSeed('HWY-
 console.log('Generated sign with', triangles, 'triangles', config);
 ```
 
+### 3. Plain ESM for hosts without a bundler (`lib/roadsign.js`)
+
+`lib/roadsign.js` is the generator alone (no exporters, no React) bundled to one
+plain ES module with `three` left as a bare import, so a no-build-step game can
+import it directly through an import map. Rebuild it with `npm run build:lib`
+after changing anything under `src/utils`, `src/data` or `src/api/core.ts`.
+
+```js
+import { buildRoadSignAssemblyScene, normalizeSignConfig, loadSignFonts } from './roadsign_gen/lib/roadsign.js';
+
+await loadSignFonts('./roadsign_gen/public/fonts/'); // faces are painted once: load them first
+const { rootGroup } = buildRoadSignAssemblyScene(normalizeSignConfig({ signs: [{ shape: 'diamond' }] }), 1, false, null);
+```
+
 ---
 
 ## Local Development

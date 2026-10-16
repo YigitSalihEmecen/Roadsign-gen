@@ -14,6 +14,7 @@ import {
   StarterTemplateItem,
 } from '../data/presets';
 import { generateSignAssemblyFromSeed, createRandomSeedCode } from '../utils/prng';
+import { normalizeSignConfig, loadSignFonts } from './core';
 import { buildRoadSignAssemblyScene } from '../utils/geometryBuilder';
 import { renderSignPanelTexture } from '../utils/textureRenderer';
 import { ExportFormat, ExportLODTarget, exportRoadSignModel } from '../utils/exporters';
@@ -46,55 +47,6 @@ export interface GeneratedRoadSign {
   toSTL: (lod?: LODLevel) => ArrayBuffer;
   /** Render individual sign panel textures as HTMLCanvasElement[] */
   getPanelCanvases: (lod?: LODLevel) => HTMLCanvasElement[];
-}
-
-const DEFAULT_STRUCTURE: StructureConfig = {
-  structureType: 'single-post',
-  poleProfile: 'u-channel',
-  poleMaterial: 'galvanized',
-  baseType: 'breakaway-slip',
-  poleHeight: 3.6,
-  poleRadius: 0.055,
-  gantrySpan: 2.8,
-  hasLuminaires: false,
-  hasCatwalk: false,
-  showRoadBase: false,
-  weathering: 0.08,
-};
-
-/**
- * Normalize a partial RoadSignAssembly config into a complete RoadSignAssembly.
- */
-export function normalizeSignConfig(
-  partial: Partial<RoadSignAssembly> & {
-    structure?: Partial<StructureConfig>;
-    signs?: Partial<SignPanelConfig>[];
-  } = {}
-): RoadSignAssembly {
-  const structure: StructureConfig = {
-    ...DEFAULT_STRUCTURE,
-    ...(partial.structure || {}),
-  };
-
-  const rawSigns =
-    partial.signs && partial.signs.length > 0
-      ? partial.signs
-      : [createDefaultSignPanel()];
-
-  const signs: SignPanelConfig[] = rawSigns.map((s, idx) =>
-    createDefaultSignPanel({
-      ...s,
-      id: s.id || `sign-${idx + 1}`,
-    })
-  );
-
-  return {
-    seed: partial.seed || 'CUSTOM-API-SIGN',
-    presetId: partial.presetId,
-    environment: partial.environment || 'pastel-studio',
-    structure,
-    signs,
-  };
 }
 
 /**
@@ -260,7 +212,11 @@ export function getTemplates(): StarterTemplateItem[] {
   return STARTER_TEMPLATES;
 }
 
+export { normalizeSignConfig, loadSignFonts };
+
 export const RoadSignAPI = {
+  normalizeSignConfig,
+  loadSignFonts,
   createSign,
   createSignFromSeed,
   createSignFromTemplate,

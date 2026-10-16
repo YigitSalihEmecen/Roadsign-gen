@@ -8,12 +8,14 @@
   "module": "./src/api/index.ts",
   "exports": {
     ".": "./src/api/index.ts",
-    "./api": "./src/api/index.ts"
+    "./api": "./src/api/index.ts",
+    "./lib": "./lib/roadsign.js"
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "build": "tsc -b && vite build && npm run build:lib",
+    "preview": "vite preview",
+    "build:lib": "esbuild src/api/core.ts --bundle --format=esm --external:three --target=es2020 --outfile=lib/roadsign.js"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.3",
