@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'HighwayGothic';
+  src: url('/fonts/HWYGOTH.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HighwayGothicCond';
+  src: url('/fonts/HWYGCOND.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HighwayGothicExp';
+  src: url('/fonts/HWYGEXPD.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HighwayGothicNarrow';
+  src: url('/fonts/HWYGNRRW.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HighwayGothicWide';
+  src: url('/fonts/HWYGWDE.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN1451';
+  src: url('/fonts/D-DIN-Bold.woff2') format('woff2');
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN1451Cond';
+  src: url('/fonts/D-DINCondensed-Bold.woff2') format('woff2');
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #FAF7F2;
+    color: #1E2430;
+    user-select: none;
+  }
+}
+
+/* Custom Pastel Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(243, 239, 250, 0.5);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 131, 253, 0.35);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 131, 253, 0.6);
+}
+
+/* Custom Pastel Range Input */
+input[type='range'].pastel-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: linear-gradient(90deg, #E5E0F5 0%, #D9E8F6 100%);
+  border-radius: 999px;
+  outline: none;
+  transition: background 0.2s ease;
+}
+
+input[type='range'].pastel-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #7C83FD;
+  border: 2.5px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(124, 131, 253, 0.45);
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.15s ease;
+}
+
+input[type='range'].pastel-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.18);
+  background: #636BFA;
+}
+
+input[type='range'].pastel-slider::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
